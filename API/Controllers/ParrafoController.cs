@@ -10,14 +10,16 @@ namespace API.Controllers
     public class ParrafoController : ControllerBase
     {
         [HttpGet]
-        public Texto GetParrafos()
+        public async Task<IActionResult> GetAnalisisParrafos()
         {
             AnalizadorParrafo analizador = new AnalizadorParrafo();
-            return analizador.resAnalizadorParrafo();
+            var resultado = await analizador.ResAnalizadorParrafo();
+
+            return new JsonResult(resultado);
         }
 
 
-        // Siguientes lineas son pruebas en cada fase
+        // Siguientes lineas de codigo fueron para probar la integracion de las capas de la solución 
         [HttpGet]
         public ActionResult<Texto> GetPrueba() //  Metodo de ejemplo para probar la forma de exponer datos.
         {

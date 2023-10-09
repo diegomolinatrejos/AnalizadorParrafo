@@ -14,4 +14,13 @@ namespace DTO.Models
         public string paragraphValue { get; set; }
 
     }
+
+    public class AnalisisResultado
+    {
+        public List<string> PalabrasConD { get; set; }
+        public double PromedioPalabras { get; set; }
+        public string ParrafoMasLargo { get; set; }
+        public string ParrafoMasCorto { get; set; }
+        public List<string> ListaDeParrafos { get; set; }
+    }
 }

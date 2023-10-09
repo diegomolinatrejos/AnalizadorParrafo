@@ -1,25 +1,53 @@
 ﻿using DTO.Models;
+using Newtonsoft.Json.Linq;
 using System.Text.Json.Serialization;
+using System.Linq;
+using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace AppLogic
 {
     public class AnalizadorParrafo
     {
-        public Texto resAnalizadorParrafo() 
+        public async Task<AnalisisResultado> ResAnalizadorParrafo()
         {
-            var resultado = new Texto();
+            var resultado = new AnalisisResultado();
 
             var urlBaseParrafos = "https://wiki-reader-lab.azurewebsites.net";
             var urlMetodo = "/api/Text/GetAllText";
             var urlFinal = urlBaseParrafos + urlMetodo;
 
-            var client = new HttpClient();
-            client.BaseAddress = new Uri(urlFinal);
+            using (var client = new HttpClient())
+            {
+                var response = await client.GetStringAsync(urlFinal);
 
-            //llamada a la API externa que retornara 
-            var textoResultado = client.GetAsync(urlFinal).Result;
+                // Deserializar el objeto respuesta 
+                var texto = JsonConvert.DeserializeObject<Texto>(response);
 
-            var objetoJson = textoResultado.Content.ReadAsStringAsync().Result;            
+                // Lista de palabras que comienzan con 'D' o 'd'
+                resultado.PalabrasConD = texto.paragraphsList
+                    .SelectMany(p => p.paragraphValue.Split(new[] { ' ', '\t', '\n', '\r', '.', ',', ';', '!', '?' }, StringSplitOptions.RemoveEmptyEntries))
+                    .Where(word => Regex.IsMatch(word, @"^[Dd]"))
+                    .ToList();
+
+                // Promedio de palabras en los párrafos
+                resultado.PromedioPalabras = texto.paragraphsList
+                    .Average(p => p.paragraphValue.Split(new[] { ' ', '\t', '\n', '\r', '.', ',', ';', '!', '?' }, StringSplitOptions.RemoveEmptyEntries).Length);
+
+                // Párrafo con más palabras
+                resultado.ParrafoMasLargo = texto.paragraphsList
+                    .OrderByDescending(p => p.paragraphValue.Split(new[] { ' ', '\t', '\n', '\r', '.', ',', ';', '!', '?' }, StringSplitOptions.RemoveEmptyEntries).Length)
+                    .FirstOrDefault()?.paragraphValue;
+
+                // Párrafo con menos palabras
+                resultado.ParrafoMasCorto = texto.paragraphsList
+                    .OrderBy(p => p.paragraphValue.Split(new[] { ' ', '\t', '\n', '\r', '.', ',', ';', '!', '?' }, StringSplitOptions.RemoveEmptyEntries).Length)
+                    .FirstOrDefault()?.paragraphValue;
+
+                // Lista de párrafos obtenidos a trabajar
+                resultado.ListaDeParrafos = texto.paragraphsList.Select(p => p.paragraphValue).ToList();
+
+            }
 
             return resultado;
         }
